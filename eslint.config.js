@@ -5,7 +5,15 @@ const playwright = require('eslint-plugin-playwright');
 
 module.exports = tseslint.config(
   {
-    ignores: ['node_modules/', 'test-results/', 'playwright-report/', 'blob-report/'],
+    ignores: [
+      'node_modules/',
+      'test-results/',
+      'playwright-report/',
+      'blob-report/',
+      'allure-results/',
+      'allure-report/',
+      'allure-history/',
+    ],
   },
   eslint.configs.recommended,
   {

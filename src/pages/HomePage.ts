@@ -2,6 +2,8 @@ import type { Locator, Page } from '@playwright/test';
 import { Routes } from '../actions/NavigationActions';
 import { HeaderComponent } from '../components/HeaderComponent';
 import type { ProductSortOption } from '../types';
+import { parsePrice } from '../utils/currency';
+import { step } from '../utils/step';
 import { BasePage } from './base/BasePage';
 
 /** Home page after login: the product catalog (inventory). */
@@ -29,14 +31,17 @@ export class HomePage extends BasePage {
     return this.productItems.filter({ hasText: productName });
   }
 
+  @step((productName: string) => `Adicionar "${productName}" ao carrinho`)
   async addToCart(productName: string): Promise<void> {
     await this.productCard(productName).getByRole('button', { name: 'Add to cart' }).click();
   }
 
+  @step((productName: string) => `Remover "${productName}" do carrinho`)
   async removeFromCart(productName: string): Promise<void> {
     await this.productCard(productName).getByRole('button', { name: 'Remove' }).click();
   }
 
+  @step((option: ProductSortOption) => `Ordenar produtos por "${option}"`)
   async sortBy(option: ProductSortOption): Promise<void> {
     await this.sortSelect.selectOption(option);
   }
@@ -47,6 +52,6 @@ export class HomePage extends BasePage {
 
   async getProductPrices(): Promise<number[]> {
     const prices = await this.productPrices.allInnerTexts();
-    return prices.map((price) => Number(price.replace('$', '')));
+    return prices.map(parsePrice);
   }
 }

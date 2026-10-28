@@ -14,6 +14,12 @@ export interface UserCredentials {
   password: string;
 }
 
+export interface CustomerInfo {
+  firstName: string;
+  lastName: string;
+  postalCode: string;
+}
+
 export interface FormField {
   locator: Locator;
   value: string;

@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { step } from '../utils/step';
 
 /** Side menu (burger menu), available on every authenticated page. */
 export class MenuComponent {
@@ -16,19 +17,23 @@ export class MenuComponent {
     this.resetAppStateLink = page.getByTestId('reset-sidebar-link');
   }
 
+  @step('Abrir o menu lateral')
   async open(): Promise<void> {
     await this.openButton.click();
   }
 
+  @step('Fechar o menu lateral')
   async close(): Promise<void> {
     await this.closeButton.click();
   }
 
+  @step('Fazer logout')
   async logout(): Promise<void> {
     await this.open();
     await this.logoutLink.click();
   }
 
+  @step('Restaurar o estado da aplicação')
   async resetAppState(): Promise<void> {
     await this.open();
     await this.resetAppStateLink.click();

@@ -1,13 +1,17 @@
+import * as allure from 'allure-js-commons';
 import { hasLockedOutUser, hasStandardUser, loginMessages, users } from '../../src/data/users';
 import { expect, test } from '../../src/fixtures/testFixtures';
 
 test.describe('Login', () => {
   test.beforeEach(async ({ loginPage }) => {
+    await allure.epic('Autenticação');
+    await allure.feature('Login');
     await loginPage.open();
   });
 
   test('Deve permitir acesso com credenciais válidas', async ({ loginPage, homePage, page }) => {
     test.skip(!hasStandardUser(), 'Defina TEST_USERNAME e TEST_PASSWORD no .env');
+    await allure.severity(allure.Severity.BLOCKER);
 
     await loginPage.login(users.standard());
 
@@ -18,6 +22,7 @@ test.describe('Login', () => {
 
   test('Deve bloquear o acesso de usuário bloqueado', async ({ loginPage, page }) => {
     test.skip(!hasLockedOutUser(), 'Defina TEST_LOCKED_USERNAME e TEST_PASSWORD no .env');
+    await allure.severity(allure.Severity.CRITICAL);
 
     await loginPage.login(users.lockedOut());
 
@@ -27,6 +32,7 @@ test.describe('Login', () => {
 
   test('Deve encerrar a sessão ao fazer logout', async ({ loginPage, homePage, page }) => {
     test.skip(!hasStandardUser(), 'Defina TEST_USERNAME e TEST_PASSWORD no .env');
+    await allure.severity(allure.Severity.CRITICAL);
 
     await loginPage.login(users.standard());
     await expect(homePage.pageTitle).toBeVisible();

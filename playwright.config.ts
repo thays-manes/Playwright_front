@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { defineConfig, devices } from '@playwright/test';
 import { getEnvironment } from './config/environments';
 import { Environment } from './src/utils/Environment';
@@ -18,11 +19,30 @@ export default defineConfig({
   },
   // Destructive scenarios never run against production.
   grepInvert: environment.isProduction ? /@destructive/ : undefined,
-  reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
+  globalSetup: './config/global-setup.ts',
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    [
+      'allure-playwright',
+      {
+        resultsDir: 'allure-results',
+        detail: true,
+        suiteTitle: true,
+        environmentInfo: {
+          Ambiente: environment.name,
+          'Base URL': environment.baseURL,
+          'Node.js': process.version,
+          'Sistema operacional': `${os.type()} ${os.release()}`,
+        },
+      },
+    ],
+  ],
   use: {
     baseURL: environment.baseURL,
     testIdAttribute: 'data-test',
-    screenshot: 'only-on-failure',
+    // Screenshot at the end of every test (passed or failed) for the reports.
+    screenshot: 'on',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
     actionTimeout: Environment.number('ACTION_TIMEOUT', 10_000),

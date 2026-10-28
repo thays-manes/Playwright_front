@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { FormActions } from '../actions/FormActions';
 import { Routes } from '../actions/NavigationActions';
 import type { UserCredentials } from '../types';
+import { step } from '../utils/step';
 import { BasePage } from './base/BasePage';
 
 export class LoginPage extends BasePage {
@@ -32,6 +33,7 @@ export class LoginPage extends BasePage {
     await FormActions.submit(this.loginButton);
   }
 
+  @step((credentials: UserCredentials) => `Fazer login com o usuário "${credentials.username}"`)
   async login(credentials: UserCredentials): Promise<void> {
     this.logger.info(`Login com usuário "${credentials.username}"`);
     await this.fillCredentials(credentials);

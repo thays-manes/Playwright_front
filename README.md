@@ -17,8 +17,23 @@ a prática de automação de testes. Os testes cobrem:
 | Login | acesso válido, usuário bloqueado, logout |
 | Validações de login | credenciais inválidas, usuário obrigatório, senha obrigatória, rota protegida |
 | Página inicial | elementos principais, contador do carrinho, ordenação por preço e por nome |
+| Checkout | **compra completa de ponta a ponta**, cálculo de subtotal/taxa/total, remoção de item, cancelamento, campos obrigatórios do comprador |
 
-Todos os cenários são executados em **Chromium, Firefox e WebKit**.
+São 18 cenários, todos executados em **Chromium, Firefox e WebKit** (54 execuções).
+
+### Fluxo de compra completo
+
+O cenário *Deve concluir uma compra de ponta a ponta com sucesso* percorre toda a jornada do cliente:
+
+1. Login com usuário válido
+2. Adição de dois produtos ao carrinho e conferência do contador
+3. Conferência dos itens no carrinho
+4. Preenchimento dos dados do comprador (gerados pela `TestDataFactory`)
+5. Conferência do resumo: itens, pagamento e entrega
+6. Finalização do pedido e validação da mensagem de confirmação
+7. Carrinho vazio e retorno à página inicial
+
+Os testes de checkout recebem a tag `@destructive`, pois criam pedidos, e por isso nunca rodam com `TEST_ENV=prod`.
 
 ## 2. Pré-requisitos
 
@@ -37,40 +52,53 @@ node --version
 playright/
 ├── .github/workflows/playwright.yml  # Pipeline de CI (GitHub Actions)
 ├── config/
-│   └── environments.ts       # Ambientes (demo, dev, hml, prod) e baseURL
+│   ├── environments.ts       # Ambientes (demo, dev, hml, prod) e baseURL
+│   └── global-setup.ts       # Limpeza dos resultados do Allure antes da execução
 ├── src/
 │   ├── actions/
 │   │   ├── FormActions.ts        # Preenchimento e envio genérico de formulários
 │   │   └── NavigationActions.ts  # Rotas da aplicação e navegação
 │   ├── components/
+│   │   ├── CartItemsComponent.ts # Lista de itens (carrinho e resumo do pedido)
 │   │   ├── HeaderComponent.ts    # Cabeçalho: logo, carrinho, menu
 │   │   └── MenuComponent.ts      # Menu lateral: logout, reset de estado
 │   ├── data/
-│   │   └── users.ts              # Usuários (via .env) e mensagens esperadas
+│   │   ├── checkout.ts           # Mensagens e títulos do checkout
+│   │   ├── products.ts           # Nomes dos produtos do catálogo
+│   │   └── users.ts              # Usuários (via .env) e mensagens de login
 │   ├── fixtures/
-│   │   └── testFixtures.ts       # Fixtures: loginPage, homePage, authenticatedHomePage
+│   │   └── testFixtures.ts       # Fixtures das páginas
 │   ├── pages/
-│   │   ├── base/BasePage.ts      # Comportamento comum a todas as páginas
-│   │   ├── HomePage.ts           # Catálogo de produtos
-│   │   └── LoginPage.ts          # Tela de login
+│   │   ├── base/BasePage.ts            # Comportamento comum a todas as páginas
+│   │   ├── CartPage.ts                 # Carrinho
+│   │   ├── CheckoutInformationPage.ts  # Checkout 1/3: dados do comprador
+│   │   ├── CheckoutOverviewPage.ts     # Checkout 2/3: resumo e valores
+│   │   ├── CheckoutCompletePage.ts     # Checkout 3/3: confirmação
+│   │   ├── HomePage.ts                 # Catálogo de produtos
+│   │   └── LoginPage.ts                # Tela de login
 │   ├── types/index.ts            # Tipos e interfaces compartilhados
 │   └── utils/
+│       ├── currency.ts           # Conversão e arredondamento de preços
 │       ├── Environment.ts        # Leitura e validação de variáveis de ambiente
 │       ├── Logger.ts             # Logger com níveis
+│       ├── step.ts               # Decorator @step para os relatórios
 │       └── TestDataFactory.ts    # Geração de massa de dados descartável
 ├── tests/
+│   ├── checkout/checkout.spec.ts
 │   ├── home/home.spec.ts
 │   └── login/
 │       ├── login.spec.ts
 │       └── login-validation.spec.ts
 ├── .env.example
+├── allurerc.mjs              # Configuração do Allure Report
 ├── eslint.config.js
 ├── playwright.config.ts
 ├── tsconfig.json
 └── package.json
 ```
 
-> `test-results/` e `playwright-report/` são gerados automaticamente na execução e não são versionados.
+> `test-results/`, `playwright-report/`, `allure-results/`, `allure-report/` e `allure-history/` são gerados
+> automaticamente e não são versionados.
 
 ## 4. Instalação das dependências
 
@@ -172,8 +200,60 @@ npm run test:debug
 
 ## 10. Relatórios
 
-O relatório HTML é gerado a cada execução em `playwright-report/`. Em falhas, screenshots, vídeos e traces ficam
-em `test-results/`.
+O projeto gera dois relatórios a cada execução. **Todos os cenários, aprovados ou reprovados, recebem um
+screenshot da tela ao final.** Nos que falham, também são anexados vídeo, trace e o contexto do erro.
+
+### Allure Report (principal)
+
+O [Allure Report 3](https://allurereport.org) roda apenas com Node.js, sem precisar de Java, e oferece:
+
+- **Dashboard com gráficos**: porcentagem de testes aprovados e reprovados, distribuição por severidade, tendência
+  de status entre execuções e duração dos testes;
+- cada cenário com seus **steps de negócio** (ex.: *Fazer login com o usuário "standard_user"*), screenshot,
+  vídeo e trace;
+- organização por navegador, épico (*Autenticação*, *Catálogo*), funcionalidade e severidade;
+- metadados da execução: ambiente, URL, versão do Node.js e sistema operacional.
+
+Depois de rodar os testes, gere o relatório e abra no navegador:
+
+```bash
+npm run allure:report
+```
+
+Ou em etapas:
+
+```bash
+npm run allure:generate
+```
+
+```bash
+npm run allure:open
+```
+
+Ao abrir, escolha **Awesome** para ver os cenários em detalhe ou **Dashboard** para ver os gráficos. O gráfico de
+tendência (*Status dynamics*) passa a ser preenchido a partir da segunda execução, porque usa o histórico salvo
+em `allure-history/`.
+
+Arquivos envolvidos:
+
+| Arquivo | Função |
+| --- | --- |
+| `allurerc.mjs` | Configuração do Allure: nome, plugins (awesome e dashboard) e histórico |
+| `config/global-setup.ts` | Limpa `allure-results/` antes de cada execução |
+| `src/utils/step.ts` | Decorator `@step` que transforma métodos das páginas em steps nos relatórios |
+
+Classificando um teste no Allure:
+
+```ts
+import * as allure from 'allure-js-commons';
+
+test('Deve ...', async () => {
+  await allure.severity(allure.Severity.CRITICAL);
+  // ...
+});
+```
+
+### Relatório HTML do Playwright
 
 ```bash
 npm run report
@@ -243,6 +323,10 @@ test('Deve exibir o carrinho vazio', async ({ authenticatedHomePage: homePage })
 | `loginPage` | Instância de `LoginPage` |
 | `homePage` | Instância de `HomePage` (sem login) |
 | `authenticatedHomePage` | `HomePage` com o usuário padrão já autenticado |
+| `cartPage` | Instância de `CartPage` |
+| `checkoutInformationPage` | Instância de `CheckoutInformationPage` |
+| `checkoutOverviewPage` | Instância de `CheckoutOverviewPage` |
+| `checkoutCompletePage` | Instância de `CheckoutCompletePage` |
 
 Cada fixture é criada a partir do `page` do próprio teste, então testes paralelos nunca compartilham estado.
 
@@ -275,7 +359,8 @@ Regras adicionais:
 | Testes aparecem como *skipped* | Credenciais ausentes no `.env` |
 | `TEST_ENV inválido` | Use `demo`, `dev`, `hml` ou `prod` |
 | Timeout ao localizar elemento | Abra o trace (`npx playwright show-trace`) e confira o seletor com `npx playwright codegen <url>` |
-| Falha só no CI | Baixe o artefato `playwright-report` do job e abra com `npx playwright show-report <pasta>` |
+| Falha só no CI | Baixe o artefato `allure-report` do job e abra com `npx allure open <pasta>` |
+| `allure open` mostra relatório antigo | Rode `npm run allure:generate` antes de abrir |
 | Bibliotecas ausentes no Linux | `npx playwright install-deps` |
 
 ## Qualidade de código

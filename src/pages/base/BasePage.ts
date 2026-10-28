@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { NavigationActions, type Route } from '../../actions/NavigationActions';
 import { Logger } from '../../utils/Logger';
+import { step } from '../../utils/step';
 
 /**
  * Behavior shared by every page. Keep it small: anything specific
@@ -18,6 +19,7 @@ export abstract class BasePage {
     this.navigation = new NavigationActions(page);
   }
 
+  @step('Abrir a página')
   async open(): Promise<void> {
     this.logger.debug(`Abrindo ${this.route}`);
     await this.navigation.goTo(this.route);
