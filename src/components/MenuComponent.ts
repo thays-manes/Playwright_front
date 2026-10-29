@@ -1,15 +1,16 @@
 import type { Locator, Page } from '@playwright/test';
 import { step } from '../utils/step';
 
-/** Side menu (burger menu), available on every authenticated page. */
+/** Menu lateral (ícone de três linhas), disponível em todas as páginas depois do login. */
 export class MenuComponent {
-  readonly openButton: Locator;
-  readonly closeButton: Locator;
-  readonly allItemsLink: Locator;
-  readonly logoutLink: Locator;
-  readonly resetAppStateLink: Locator;
+  readonly openButton: Locator; // botão que abre o menu
+  readonly closeButton: Locator; // botão "X" que fecha o menu
+  readonly allItemsLink: Locator; // opção "All Items"
+  readonly logoutLink: Locator; // opção "Logout"
+  readonly resetAppStateLink: Locator; // opção "Reset App State"
 
   constructor(page: Page) {
+    // getByRole procura pelo papel do elemento (botão, link...) e pelo nome acessível.
     this.openButton = page.getByRole('button', { name: 'Open Menu' });
     this.closeButton = page.getByRole('button', { name: 'Close Menu' });
     this.allItemsLink = page.getByTestId('inventory-sidebar-link');
@@ -17,6 +18,8 @@ export class MenuComponent {
     this.resetAppStateLink = page.getByTestId('reset-sidebar-link');
   }
 
+  // @step('...') é um decorator: faz este método aparecer como um passo com esse nome nos relatórios.
+  // (veja src/utils/step.ts)
   @step('Abrir o menu lateral')
   async open(): Promise<void> {
     await this.openButton.click();
@@ -27,12 +30,14 @@ export class MenuComponent {
     await this.closeButton.click();
   }
 
+  /** Abre o menu e clica em Logout. */
   @step('Fazer logout')
   async logout(): Promise<void> {
     await this.open();
     await this.logoutLink.click();
   }
 
+  /** Abre o menu, clica em "Reset App State" (limpa o carrinho) e fecha o menu. */
   @step('Restaurar o estado da aplicação')
   async resetAppState(): Promise<void> {
     await this.open();

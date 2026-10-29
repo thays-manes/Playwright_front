@@ -1,4 +1,7 @@
-/** Product names as displayed in the catalog of the application under test. */
+/**
+ * Nomes dos produtos exatamente como aparecem no catálogo do site.
+ * Nos testes usamos products.backpack em vez de digitar o nome, evitando erros de digitação.
+ */
 export const products = {
   backpack: 'Sauce Labs Backpack',
   bikeLight: 'Sauce Labs Bike Light',

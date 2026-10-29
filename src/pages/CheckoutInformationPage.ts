@@ -5,17 +5,17 @@ import type { CustomerInfo } from '../types';
 import { step } from '../utils/step';
 import { BasePage } from './base/BasePage';
 
-/** Checkout step 1: buyer information. */
+/** Checkout etapa 1: formulário com os dados do comprador. */
 export class CheckoutInformationPage extends BasePage {
   protected readonly route = Routes.checkoutInformation;
 
-  readonly pageTitle: Locator;
-  readonly firstNameInput: Locator;
-  readonly lastNameInput: Locator;
-  readonly postalCodeInput: Locator;
-  readonly continueButton: Locator;
-  readonly cancelButton: Locator;
-  readonly errorMessage: Locator;
+  readonly pageTitle: Locator; // título "Checkout: Your Information"
+  readonly firstNameInput: Locator; // campo nome
+  readonly lastNameInput: Locator; // campo sobrenome
+  readonly postalCodeInput: Locator; // campo CEP
+  readonly continueButton: Locator; // botão "Continue"
+  readonly cancelButton: Locator; // botão "Cancel"
+  readonly errorMessage: Locator; // mensagem de erro (campo obrigatório)
 
   constructor(page: Page) {
     super(page);
@@ -28,6 +28,7 @@ export class CheckoutInformationPage extends BasePage {
     this.errorMessage = page.getByTestId('error');
   }
 
+  /** Preenche nome, sobrenome e CEP (sem clicar em Continue). */
   async fillInformation({ firstName, lastName, postalCode }: CustomerInfo): Promise<void> {
     await FormActions.fillFields([
       { locator: this.firstNameInput, value: firstName },
@@ -36,12 +37,14 @@ export class CheckoutInformationPage extends BasePage {
     ]);
   }
 
+  /** Preenche os dados e clica em Continue. */
   @step('Preencher os dados do comprador e continuar')
   async submitInformation(customer: CustomerInfo): Promise<void> {
     await this.fillInformation(customer);
     await FormActions.submit(this.continueButton);
   }
 
+  /** Clica em Cancel (volta para o carrinho). */
   @step('Cancelar o checkout')
   async cancel(): Promise<void> {
     await this.cancelButton.click();
